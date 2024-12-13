@@ -12,8 +12,11 @@ from collections import defaultdict
 # Initialize instructor-wrapped client
 client = instructor.patch(OpenAI())
 
+model = "gpt-4o-mini"
+
 def get_db_connection():
-    db_path = os.path.join('data', 'p2000.db')
+    # Get database path from environment variable, fallback to data directory
+    db_path = os.getenv('DB_PATH', os.path.join('data', 'p2000.db'))
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
@@ -136,7 +139,7 @@ Identify patterns and assess severity."""
 
         # Get cluster analysis
         cluster_analysis = client.chat.completions.create(
-            model="gpt-4-1106-preview",
+            model=model,
             response_model=IncidentCluster,
             messages=[
                 {"role": "user", "content": prompt}
@@ -199,7 +202,7 @@ Provide a comprehensive analysis including key highlights, trends, and recommend
 
         # Get final analysis
         analysis = client.chat.completions.create(
-            model="gpt-4-1106-preview",
+            model=model,
             response_model=DailyIncidentAnalysis,
             messages=[
                 {"role": "user", "content": prompt}

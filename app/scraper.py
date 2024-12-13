@@ -20,8 +20,9 @@ class P2000Scraper:
     MAX_CONSECUTIVE_ERRORS = 3
     MAX_EMPTY_PAGES = 2
     
-    def __init__(self, db_path: str = os.path.join('data', 'p2000.db'), delay: float = 1.0):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None, delay: float = 1.0):
+        # Get database path from environment variable or fallback to provided path or default
+        self.db_path = db_path or os.getenv('DB_PATH', os.path.join('data', 'p2000.db'))
         self.delay = delay
         self.consecutive_errors = 0
         self.empty_pages = 0

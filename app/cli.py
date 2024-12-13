@@ -11,7 +11,8 @@ from rich import box
 console = Console()
 
 def get_db_connection():
-    db_path = os.path.join('data', 'p2000.db')
+    # Get database path from environment variable, fallback to data directory
+    db_path = os.getenv('DB_PATH', os.path.join('data', 'p2000.db'))
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
