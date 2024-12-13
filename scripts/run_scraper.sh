@@ -2,6 +2,7 @@
 
 # Debug: Print current directory and PYTHONPATH
 pwd
+cd /app
 echo "PYTHONPATH: $PYTHONPATH"
 
 # Add the project root directory to PYTHONPATH
