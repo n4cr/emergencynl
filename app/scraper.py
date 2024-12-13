@@ -344,8 +344,8 @@ Examples:
     parser.add_argument(
         '--db-path',
         type=str,
-        default='p2000.db',
-        help='Path to SQLite database file (default: p2000.db)'
+        default='data/p2000.db',
+        help='Path to SQLite database file (default: data/p2000.db)'
     )
     
     parser.add_argument(

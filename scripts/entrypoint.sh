@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Function to initialize database with some data
+init_database() {
+    echo "Initializing database..."
+    python -m app.scraper --minutes 30 --delay 1.0
+}
+
+# Function to start web service
+start_web() {
+    echo "Starting web service..."
+    # Initialize database if needed
+    init_database
+    exec gunicorn -b 0.0.0.0:8000 --config gunicorn.conf.py wsgi:app
+}
+
 # Function to start cron service
 start_cron() {
     echo "Starting cron service..."
@@ -14,12 +28,6 @@ start_cron() {
     # Start cron in foreground with output to stdout
     echo "Starting cron in foreground..."
     exec cron -f -L 15
-}
-
-# Function to start web service
-start_web() {
-    echo "Starting web service..."
-    exec gunicorn -b 0.0.0.0:8000 --config gunicorn.conf.py wsgi:app
 }
 
 # Check the command argument

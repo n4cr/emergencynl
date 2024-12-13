@@ -5,15 +5,42 @@ from typing import Dict, List, Optional
 import os
 from .ai import get_incident_insights
 
+# Create the Flask app first
 app = Flask(__name__)
 
 def get_db_connection():
     # Get database path from environment variable, fallback to data directory
     db_path = os.getenv('DB_PATH', os.path.join('data', 'p2000.db'))
     app.logger.info(f"Connecting to database at: {db_path}")
+    
+    # Ensure the data directory exists
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
+    
+    # Initialize the database tables if they don't exist
+    with conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS incidents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME NOT NULL,
+                service_type TEXT NOT NULL,
+                region TEXT NOT NULL,
+                message TEXT NOT NULL,
+                details TEXT,
+                raw_timestamp TEXT NOT NULL,
+                UNIQUE(timestamp, service_type, region, message)
+            )
+        """)
+    
     return conn
+
+# Initialize the app
+with app.app_context():
+    # Ensure database and tables exist
+    with get_db_connection() as conn:
+        pass  # The connection function now handles table creation
 
 def get_available_regions() -> List[str]:
     """Get list of all available regions from the database."""
@@ -166,24 +193,33 @@ def get_data_for_date(date: datetime, region: Optional[str] = None) -> Dict:
 
 @app.route('/')
 def index():
-    # Get query parameters with defaults
-    date_str = request.args.get('date', (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
-    region = request.args.get('region', None)
-    
     try:
-        selected_date = datetime.strptime(date_str, '%Y-%m-%d')
-    except ValueError:
-        selected_date = datetime.now() - timedelta(days=1)
-    
-    data = get_data_for_date(selected_date, region)
-    regions = get_available_regions()
-    
-    return render_template('index.html', 
-                         data=data, 
-                         date=selected_date.strftime('%B %d, %Y'),
-                         regions=regions,
-                         selected_region=region,
-                         selected_date=selected_date.strftime('%Y-%m-%d'))
+        # Get query parameters with defaults
+        date_str = request.args.get('date', (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
+        region = request.args.get('region', None)
+        
+        try:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            selected_date = datetime.now() - timedelta(days=1)
+        
+        data = get_data_for_date(selected_date, region)
+        regions = get_available_regions()
+        
+        return render_template('index.html', 
+                             data=data, 
+                             date=selected_date.strftime('%B %d, %Y'),
+                             regions=regions,
+                             selected_region=region,
+                             selected_date=selected_date.strftime('%Y-%m-%d'))
+    except sqlite3.OperationalError as e:
+        app.logger.error(f"Database error: {str(e)}")
+        return render_template('error.html', 
+                             message="Database error. Please ensure the scraper has run at least once."), 500
+    except Exception as e:
+        app.logger.error(f"Unexpected error: {str(e)}")
+        return render_template('error.html', 
+                             message="An unexpected error occurred."), 500
 
 @app.route('/api/data')
 def get_data():
