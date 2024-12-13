@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app/app.py
+      - DB_PATH=/app/data/p2000.db
+      - LOG_LEVEL=info
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    env_file:
+      - .env
+    command: ["./scripts/entrypoint.sh", "web"]
+    restart: unless-stopped
+
+  cron:
+    build: .
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_PATH=/app/data/p2000.db
+      - SCRAPER_INTERVAL=30
+      - SCRAPER_DELAY=1.0
+      - LOG_LEVEL=info
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    env_file:
+      - .env
+    command: ["./scripts/entrypoint.sh", "cron"]
+    restart: unless-stopped
