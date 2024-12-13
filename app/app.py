@@ -196,5 +196,19 @@ def get_data():
     
     return jsonify(get_data_for_date(selected_date, region))
 
+@app.route('/health/')
+def health():
+    """Health check endpoint for monitoring."""
+    try:
+        # Test database connection
+        with get_db_connection() as conn:
+            conn.execute('SELECT 1').fetchone()
+        return jsonify({'status': 'healthy'}), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 500
+
 if __name__ == '__main__':
     app.run(debug=True) 

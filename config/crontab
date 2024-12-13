@@ -1,2 +1,3 @@
 # Run scraper based on configured interval
-* * * * * /app/scripts/run_scraper.sh
+* * * * * echo "CRON HEALTH CHECK: The test cron ran at $(date)" > /proc/1/fd/1 2>/proc/1/fd/2
+* * * * * SCRAPER_INTERVAL=${SCRAPER_INTERVAL:-30} SCRAPER_DELAY=${SCRAPER_DELAY:-1.0} /app/scripts/run_scraper.sh > /proc/1/fd/1 2>/proc/1/fd/2

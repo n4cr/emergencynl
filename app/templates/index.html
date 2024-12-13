@@ -18,6 +18,45 @@
         .trend-up { color: #28a745; }
         .trend-down { color: #dc3545; }
         .trend-stable { color: #6c757d; }
+        .ai-analysis {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .ai-analysis .card-header {
+            background-color: #e9ecef;
+            border-bottom: none;
+        }
+        .severity-high { color: #dc3545; }
+        .severity-medium { color: #ffc107; }
+        .severity-low { color: #28a745; }
+        .highlight-card {
+            transition: transform 0.2s;
+        }
+        .highlight-card:hover {
+            transform: translateY(-2px);
+        }
+        .collapse-toggle {
+            cursor: pointer;
+        }
+        .collapse-toggle:hover {
+            background-color: #e2e6ea;
+        }
+        .collapse-toggle::after {
+            content: '';
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 0.5em;
+            vertical-align: middle;
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-left: 0.3em solid transparent;
+            transition: transform 0.2s;
+        }
+        .collapse-toggle.collapsed::after {
+            transform: rotate(-90deg);
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -53,6 +92,96 @@
                 </div>
             </div>
         </header>
+
+        <!-- AI Analysis Section -->
+        {% if data.analysis %}
+        <div class="card ai-analysis mb-4">
+            <div class="card-header collapse-toggle" data-bs-toggle="collapse" data-bs-target="#aiAnalysis" aria-expanded="false" aria-controls="aiAnalysis">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="h5 mb-0">AI Incident Analysis</h3>
+                    <small class="text-muted">Click to expand</small>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Always visible summary -->
+                <div class="mb-3">
+                    <p class="mb-0">{{ data.analysis.summary }}</p>
+                </div>
+                
+                <!-- Collapsible detailed analysis -->
+                <div class="collapse" id="aiAnalysis">
+                    <hr>
+                    <!-- Key Highlights -->
+                    <div class="mb-4">
+                        <h4 class="h6 text-muted mb-3">Key Highlights</h4>
+                        <div class="row g-3">
+                            {% for highlight in data.analysis.highlights %}
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm highlight-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title h6 d-flex justify-content-between">
+                                            {{ highlight.title }}
+                                            <span class="badge {% if highlight.severity == 'High' %}bg-danger
+                                                          {% elif highlight.severity == 'Medium' %}bg-warning
+                                                          {% else %}bg-success{% endif %}">
+                                                {{ highlight.severity }}
+                                            </span>
+                                        </h5>
+                                        <p class="card-text small">{{ highlight.description }}</p>
+                                        <div class="mt-2">
+                                            {% for area in highlight.affected_areas %}
+                                            <span class="badge bg-light text-dark me-1">{{ area }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Trends -->
+                    <div class="mb-4">
+                        <h4 class="h6 text-muted mb-3">Identified Trends</h4>
+                        <div class="row g-3">
+                            {% for trend in data.analysis.trends %}
+                            <div class="col-12">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title h6">{{ trend.name }}</h5>
+                                        <p class="card-text small">{{ trend.description }}</p>
+                                        <div class="mt-2">
+                                            <h6 class="text-muted small">Supporting Evidence:</h6>
+                                            <ul class="small mb-0">
+                                                {% for evidence in trend.evidence %}
+                                                <li>{{ evidence }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div>
+                        <h4 class="h6 text-muted mb-3">Recommendations</h4>
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for recommendation in data.analysis.recommendations %}
+                                    <li class="list-group-item bg-transparent">{{ recommendation }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Quick Stats -->
         <div class="row g-4 mb-4">
@@ -195,86 +324,6 @@
                 <p class="text-muted mt-2">7-day incident trend</p>
             </div>
         </div>
-
-        <!-- AI Analysis -->
-        {% if data.analysis %}
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h3 class="card-title h5 mb-0">AI Incident Analysis</h3>
-            </div>
-            <div class="card-body">
-                <!-- Summary -->
-                <div class="mb-4">
-                    <h4 class="h6 text-muted">Summary</h4>
-                    <p>{{ data.analysis.summary }}</p>
-                </div>
-
-                <!-- Key Highlights -->
-                <div class="mb-4">
-                    <h4 class="h6 text-muted">Key Highlights</h4>
-                    <div class="row g-3">
-                        {% for highlight in data.analysis.highlights %}
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body">
-                                    <h5 class="card-title h6">
-                                        {{ highlight.title }}
-                                        <span class="badge {% if highlight.severity == 'High' %}bg-danger
-                                                         {% elif highlight.severity == 'Medium' %}bg-warning
-                                                         {% else %}bg-success{% endif %} float-end">
-                                            {{ highlight.severity }}
-                                        </span>
-                                    </h5>
-                                    <p class="card-text small">{{ highlight.description }}</p>
-                                    <div class="mt-2">
-                                        {% for area in highlight.affected_areas %}
-                                        <span class="badge bg-light text-dark me-1">{{ area }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Trends -->
-                <div class="mb-4">
-                    <h4 class="h6 text-muted">Identified Trends</h4>
-                    <div class="row g-3">
-                        {% for trend in data.analysis.trends %}
-                        <div class="col-12">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body">
-                                    <h5 class="card-title h6">{{ trend.name }}</h5>
-                                    <p class="card-text small">{{ trend.description }}</p>
-                                    <div class="mt-2">
-                                        <h6 class="text-muted small">Supporting Evidence:</h6>
-                                        <ul class="small">
-                                            {% for evidence in trend.evidence %}
-                                            <li>{{ evidence }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Recommendations -->
-                <div>
-                    <h4 class="h6 text-muted">Recommendations</h4>
-                    <ul class="list-group list-group-flush">
-                        {% for recommendation in data.analysis.recommendations %}
-                        <li class="list-group-item">{{ recommendation }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        {% endif %}
 
         <!-- Footer -->
         <footer class="text-center text-muted">

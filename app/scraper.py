@@ -402,14 +402,9 @@ Examples:
         sys.exit(1)
 
 if __name__ == "__main__":
-    # Create data directory if it doesn't exist
-    os.makedirs('data', exist_ok=True)
-    
-    # Initialize scraper
-    scraper = P2000Scraper()
-    
-    # Get incidents from the last hour
-    from_date = datetime.now() - timedelta(hours=1)
-    total_incidents, new_incidents = scraper.scrape_until_date(from_date)
-    
-    logging.info(f"Scraping complete. Found {total_incidents} incidents, {new_incidents} new.") 
+    # Only run the scraper if called with command line arguments
+    if len(sys.argv) > 1:
+        main()
+    else:
+        # Create data directory if it doesn't exist
+        os.makedirs('data', exist_ok=True) 

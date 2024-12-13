@@ -20,13 +20,13 @@ servers:
 
 env:
   clear:
-    - FLASK_ENV=production
-    - FLASK_APP=app/app.py
-    - DB_PATH=/app/data/p2000.db
-    - LOG_LEVEL=info
-    - PYTHONUNBUFFERED=1
-    - SCRAPER_INTERVAL=30
-    - SCRAPER_DELAY=1.0
+    FLASK_ENV: production
+    FLASK_APP: app/app.py
+    DB_PATH: /app/data/p2000.db
+    LOG_LEVEL: info
+    PYTHONUNBUFFERED: 1
+    SCRAPER_INTERVAL: 30
+    SCRAPER_DELAY: 1.0
   secret:
     - OPENAI_API_KEY
 
