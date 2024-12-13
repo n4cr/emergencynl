@@ -10,6 +10,7 @@ app = Flask(__name__)
 def get_db_connection():
     # Use data directory for database storage
     db_path = os.path.join('data', 'p2000.db')
+    app.logger.info(f"Connecting to database at: {db_path}")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
