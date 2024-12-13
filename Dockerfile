@@ -16,8 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy the application code
 COPY . .
 
-# Make the entrypoint script executable
-RUN chmod +x /app/scripts/entrypoint.sh
+# Make scripts executable
+RUN chmod +x /app/scripts/entrypoint.sh && \
+    chmod +x /app/scripts/run_scraper.sh
 
 # Default command (web server)
 CMD ["gunicorn", "-b", "0.0.0.0:8000", "--config", "gunicorn.conf.py", "wsgi:app"] 

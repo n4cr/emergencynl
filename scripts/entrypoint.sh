@@ -5,12 +5,22 @@ start_cron() {
     echo "Starting cron service..."
     
     # Load environment variables into crontab
-    env | grep -v "no_proxy" > /tmp/env.txt
-    cat /tmp/env.txt config/crontab | crontab -
-    rm /tmp/env.txt
+    printenv | grep -v "no_proxy" | sed 's/^\(.*\)$/export \1/g' > /tmp/env.sh
+    chmod +x /tmp/env.sh
     
-    # Start cron and redirect its output to stdout
-    cron -f 2>&1
+    # Create the cron.log file and set permissions
+    touch /var/log/cron.log
+    chmod 0644 /var/log/cron.log
+    
+    # Load environment and install crontab
+    cat /tmp/env.sh config/crontab | crontab -
+    
+    # Start cron in the background
+    cron
+    
+    # Tail the log file in the foreground
+    echo "Cron started, watching logs..."
+    tail -f /var/log/cron.log
 }
 
 # Function to start web service

@@ -1,2 +1,2 @@
 # Run scraper based on configured interval
-* * * * * cd /app && /usr/local/bin/python -m app.scraper --minutes $SCRAPER_INTERVAL --delay $SCRAPER_DELAY 2>&1
+* * * * * /app/scripts/run_scraper.sh
