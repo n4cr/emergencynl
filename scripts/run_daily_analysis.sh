@@ -4,4 +4,4 @@
 YESTERDAY=$(date -d "yesterday" +%Y-%m-%d)
 
 # Run the analysis command
-python -m app.cli analyze --date $YESTERDAY 
+python -m app.cli analyze -f --date $YESTERDAY 
