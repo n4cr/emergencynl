@@ -57,7 +57,16 @@ def get_incident_clusters(conn: sqlite3.Connection, start_date: datetime, end_da
     
     # Get service type clusters with counts and sample incidents
     service_clusters = conn.execute("""
-        WITH RankedIncidents AS (
+        WITH AllIncidents AS (
+            SELECT 
+                service_type,
+                COUNT(*) as total_count,
+                GROUP_CONCAT(DISTINCT region) as regions
+            FROM incidents
+            WHERE timestamp >= ? AND timestamp < ?
+            GROUP BY service_type
+        ),
+        SampleIncidents AS (
             SELECT 
                 *,
                 ROW_NUMBER() OVER (PARTITION BY service_type ORDER BY timestamp) as rn
@@ -65,23 +74,24 @@ def get_incident_clusters(conn: sqlite3.Connection, start_date: datetime, end_da
             WHERE timestamp >= ? AND timestamp < ?
         )
         SELECT 
-            service_type,
-            COUNT(*) as incident_count,
-            GROUP_CONCAT(DISTINCT region) as regions,
+            a.service_type,
+            a.total_count as incident_count,
+            a.regions,
             json_group_array(
                 json_object(
-                    'timestamp', timestamp,
-                    'service_type', service_type,
-                    'region', region,
-                    'message', message,
-                    'details', details
+                    'timestamp', s.timestamp,
+                    'service_type', s.service_type,
+                    'region', s.region,
+                    'message', s.message,
+                    'details', s.details
                 )
             ) as sample_incidents
-        FROM (
-            SELECT * FROM RankedIncidents WHERE rn <= 5
-        )
-        GROUP BY service_type
-    """, (start_date, end_date)).fetchall()
+        FROM AllIncidents a
+        LEFT JOIN (
+            SELECT * FROM SampleIncidents WHERE rn <= 5
+        ) s ON a.service_type = s.service_type
+        GROUP BY a.service_type
+    """, (start_date, end_date, start_date, end_date)).fetchall()
     
     # Get hourly distribution
     hourly_stats = conn.execute("""
@@ -125,17 +135,17 @@ def get_incident_clusters(conn: sqlite3.Connection, start_date: datetime, end_da
             for i, incident in enumerate(sample_incidents)
         ])
         
-        prompt = f"""Analyze this cluster of {cluster['incident_count']} {cluster['service_type']} incidents:
+        prompt = f"""Analyze this cluster of {cluster['incident_count']} {cluster['service_type']} incidents.
+Here are 5 sample incidents from the cluster for pattern identification:
 
-Sample incidents:
 {incidents_text}
 
 Additional information:
-- Peak hours: {peak_hours[cluster['service_type']]}
+- Total incidents in this cluster: {cluster['incident_count']}
+- Peak activity hours: {peak_hours[cluster['service_type']]}
 - Regions involved: {regions}
-- Total incidents in cluster: {cluster['incident_count']}
 
-Identify patterns and assess severity."""
+Based on these samples and statistics, identify patterns and assess overall severity."""
 
         # Get cluster analysis
         cluster_analysis = client.chat.completions.create(

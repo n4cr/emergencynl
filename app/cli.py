@@ -11,8 +11,7 @@ from rich import box
 console = Console()
 
 def get_db_connection():
-    # Get database path from environment variable, fallback to data directory
-    db_path = os.getenv('DB_PATH', os.path.join('data', 'p2000.db'))
+    db_path = os.path.join('data', 'p2000.db')
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
@@ -21,13 +20,26 @@ def get_incidents_for_date(date: datetime) -> List[Dict]:
     """Get all incidents for a specific date."""
     start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_date = start_date + timedelta(days=1)
-    
+     
     with get_db_connection() as conn:
+        # Debug: Check total incidents in database
+        total = conn.execute("SELECT COUNT(*) as count FROM incidents").fetchone()['count']
+        console.print(f"[dim]Total incidents in database: {total}[/dim]")
+        
+        # Debug: Print date range
+        console.print(f"[dim]Querying incidents between {start_date} and {end_date}[/dim]")
+        
         incidents = conn.execute("""
             SELECT * FROM incidents 
             WHERE timestamp >= ? AND timestamp < ?
             ORDER BY timestamp
         """, (start_date, end_date)).fetchall()
+        
+        # Debug: Print sample timestamps
+        if incidents:
+            console.print(f"[dim]Sample incident timestamps:[/dim]")
+            for incident in incidents[:3]:
+                console.print(f"[dim]- {incident['timestamp']} ({type(incident['timestamp'])})[/dim]")
         
         return [dict(incident) for incident in incidents]
 
@@ -57,7 +69,42 @@ def analyze(date: str, force: bool):
                 return
                 
             # Run analysis
-            analysis = get_incident_insights(incidents, analysis_date)
+            stored_analysis = get_incident_insights(incidents, analysis_date)
+            
+            # If analysis exists and force flag not set, use existing analysis
+            if stored_analysis and not force:
+                console.print("[yellow]Using existing analysis. Use --force to regenerate.[/yellow]")
+                analysis = stored_analysis
+            else:
+                # Run new analysis
+                from .ai import analyze_daily_incidents, store_analysis
+                analysis = analyze_daily_incidents(incidents, analysis_date)
+                # Store the new analysis
+                store_analysis(analysis)
+                # Convert to dict format for display
+                analysis = {
+                    "date": analysis.date.strftime("%Y-%m-%d"),
+                    "total_incidents": analysis.total_incidents,
+                    "summary": analysis.summary,
+                    "highlights": [
+                        {
+                            "title": h.title,
+                            "description": h.description,
+                            "severity": h.severity,
+                            "affected_areas": h.affected_areas
+                        }
+                        for h in analysis.key_highlights
+                    ],
+                    "trends": [
+                        {
+                            "name": t.trend_name,
+                            "description": t.description,
+                            "evidence": t.supporting_evidence
+                        }
+                        for t in analysis.identified_trends
+                    ],
+                    "recommendations": analysis.recommendations
+                }
             
             # Display results
             console.print(f"\n[bold green]Analysis for {analysis['date']}[/bold green]\n")
@@ -110,9 +157,5 @@ def analyze(date: str, force: bool):
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
 
-def main():
-    """Entry point for direct Python execution."""
-    cli()
-
 if __name__ == '__main__':
-    main() 
+    cli() 
