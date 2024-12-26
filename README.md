@@ -132,11 +132,3 @@ docker-compose ps
 ### Database
 
 The SQLite database is stored in the `data` directory and is shared between containers. Make sure to back up this directory if you need to preserve the data.
-
-## License
-
-[Your License Here]
-
-## Contributing
-
-[Your Contributing Guidelines Here] 
