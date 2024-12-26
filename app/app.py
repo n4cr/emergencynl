@@ -166,14 +166,23 @@ def get_data_for_date(date: datetime, region: Optional[str] = None) -> Dict:
             if region:
                 day_params.append(region)
             
-            day_count = conn.execute(
-                f"SELECT COUNT(*) as count FROM incidents WHERE timestamp >= ? AND timestamp < ? {' AND region = ?' if region else ''}",
-                day_params
-            ).fetchone()['count']
+            # Get total count and service-specific counts
+            counts = conn.execute(f"""
+                SELECT 
+                    COUNT(*) as total_count,
+                    SUM(CASE WHEN service_type = 'Ambulance' THEN 1 ELSE 0 END) as ambulance_count,
+                    SUM(CASE WHEN service_type = 'Politie' THEN 1 ELSE 0 END) as police_count,
+                    SUM(CASE WHEN service_type = 'Brandweer' THEN 1 ELSE 0 END) as fire_count
+                FROM incidents 
+                WHERE timestamp >= ? AND timestamp < ? {' AND region = ?' if region else ''}
+            """, day_params).fetchone()
             
             trend_data.append({
                 'date': day_start.strftime('%Y-%m-%d'),
-                'count': day_count
+                'count': counts['total_count'],
+                'ambulance_count': counts['ambulance_count'],
+                'police_count': counts['police_count'],
+                'fire_count': counts['fire_count']
             })
         
         return {
@@ -246,6 +255,66 @@ def health():
             'status': 'unhealthy',
             'error': str(e)
         }), 500
+
+@app.route('/api/incidents')
+def get_incidents():
+    """API endpoint for fetching filtered incidents."""
+    try:
+        # Get query parameters
+        date_str = request.args.get('date', (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
+        service = request.args.get('service', '')
+        region = request.args.get('region', '')
+        search = request.args.get('search', '')
+        
+        try:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            selected_date = datetime.now() - timedelta(days=1)
+        
+        # Build query conditions
+        conditions = ["timestamp >= ? AND timestamp < ?"]
+        params = [
+            selected_date.replace(hour=0, minute=0, second=0, microsecond=0),
+            selected_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        ]
+        
+        if service:
+            conditions.append("service_type = ?")
+            params.append(service)
+        
+        if region:
+            conditions.append("region = ?")
+            params.append(region)
+        
+        if search:
+            conditions.append("(message LIKE ? OR details LIKE ?)")
+            search_pattern = f"%{search}%"
+            params.extend([search_pattern, search_pattern])
+        
+        # Construct and execute query
+        query = f"""
+            SELECT timestamp, service_type, region, message, details
+            FROM incidents
+            WHERE {' AND '.join(conditions)}
+            ORDER BY timestamp DESC
+        """
+        
+        with get_db_connection() as conn:
+            incidents = conn.execute(query, params).fetchall()
+            
+            return jsonify({
+                'incidents': [{
+                    'timestamp': row['timestamp'],
+                    'service_type': row['service_type'],
+                    'region': row['region'],
+                    'message': row['message'],
+                    'details': row['details']
+                } for row in incidents]
+            })
+            
+    except Exception as e:
+        app.logger.error(f"Error fetching incidents: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

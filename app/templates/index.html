@@ -101,6 +101,107 @@
             </div>
         </header>
 
+        <!-- Emergency Incidents Overview -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="h5 mb-0">Emergency Incidents Overview</h3>
+            </div>
+            <div class="card-body">
+                <!-- Stats Summary -->
+                <div class="row g-4 mb-4">
+                    <div class="col-12">
+                        <div class="stat-card p-3">
+                            <h3 class="h4">{{ data.total_incidents }} Total Incidents</h3>
+                            <small class="text-muted">{{ date }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card ambulance p-3">
+                            <h4>Ambulance</h4>
+                            <div class="d-flex justify-content-between">
+                                <span class="h3">{{ data.ambulance.count }}</span>
+                                <span class="trend-up">{{ data.ambulance.trend }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card police p-3">
+                            <h4>Police</h4>
+                            <div class="d-flex justify-content-between">
+                                <span class="h3">{{ data.police.count }}</span>
+                                <span class="trend-down">{{ data.police.trend }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card fire p-3">
+                            <h4>Fire</h4>
+                            <div class="d-flex justify-content-between">
+                                <span class="h3">{{ data.fire.count }}</span>
+                                <span class="trend-stable">{{ data.fire.trend }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Incidents List Section -->
+                <div class="mt-4">
+                    <!-- Filters -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <select class="form-select" id="serviceFilter">
+                                <option value="">All Services</option>
+                                <option value="Ambulance">Ambulance</option>
+                                <option value="Politie">Police</option>
+                                <option value="Brandweer">Fire</option>
+                            </select>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchIncidents" placeholder="Search messages...">
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                <button class="btn btn-primary" type="button" id="applyFilters">Apply Filters</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Incidents Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="incidentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Service</th>
+                                    <th>Region</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incidentsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted small">
+                            Showing <span id="showingRange">0-0</span> of <span id="totalIncidents">0</span> incidents
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary" id="prevPage" disabled>
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="nextPage" disabled>
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- AI Analysis Section -->
         {% if data.analysis %}
         <div class="card ai-analysis mb-4">
@@ -192,43 +293,6 @@
             </div>
         </div>
         {% endif %}
-
-        <!-- Quick Stats -->
-        <div class="row g-4 mb-4">
-            <div class="col-12">
-                <div class="stat-card p-3">
-                    <h3 class="h4">{{ data.total_incidents }} Total Incidents</h3>
-                    <small class="text-muted">{{ date }}</small>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card ambulance p-3">
-                    <h4>Ambulance</h4>
-                    <div class="d-flex justify-content-between">
-                        <span class="h3">{{ data.ambulance.count }}</span>
-                        <span class="trend-up">{{ data.ambulance.trend }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card police p-3">
-                    <h4>Police</h4>
-                    <div class="d-flex justify-content-between">
-                        <span class="h3">{{ data.police.count }}</span>
-                        <span class="trend-down">{{ data.police.trend }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card fire p-3">
-                    <h4>Fire</h4>
-                    <div class="d-flex justify-content-between">
-                        <span class="h3">{{ data.fire.count }}</span>
-                        <span class="trend-stable">{{ data.fire.trend }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Timeline Chart -->
         <div class="card mb-4">
@@ -351,6 +415,7 @@
                     <a href="https://www.linkedin.com/in/nasir-shadravan/" target="_blank" class="text-decoration-none me-2" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
                     <a href="https://x.com/n4Cr" target="_blank" class="text-decoration-none" title="Twitter"><i class="bi bi-twitter-x"></i></a>
                 </p>
+                <p>Interested in working together? <a href="https://nasir.sh" target="_blank" class="text-decoration-none">Let's connect!</a></p>
                 <p>&copy; 2024 Nasir Shadravan</p>
             </small>
         </footer>
@@ -363,7 +428,10 @@
         // Initialize date picker
         flatpickr("#datePicker", {
             maxDate: "today",
-            dateFormat: "Y-m-d"
+            dateFormat: "Y-m-d",
+            onChange: function(selectedDates, dateStr) {
+                document.getElementById('filterForm').submit();
+            }
         });
 
         // Timeline Chart
@@ -436,21 +504,183 @@
             type: 'line',
             data: {
                 labels: {{ data.trend_data|map(attribute='date')|list|tojson }},
-                datasets: [{
-                    label: 'Total Incidents',
-                    data: {{ data.trend_data|map(attribute='count')|list|tojson }},
-                    borderColor: '#6c757d',
-                    tension: 0.1
-                }]
+                datasets: [
+                    {
+                        label: 'Total Incidents',
+                        data: {{ data.trend_data|map(attribute='count')|list|tojson }},
+                        borderColor: '#6c757d',
+                        backgroundColor: '#6c757d',
+                        borderWidth: 2,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Ambulance',
+                        data: {{ data.trend_data|map(attribute='ambulance_count')|list|tojson }},
+                        borderColor: '#28a745',
+                        backgroundColor: '#28a745',
+                        borderWidth: 1.5,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Police',
+                        data: {{ data.trend_data|map(attribute='police_count')|list|tojson }},
+                        borderColor: '#007bff',
+                        backgroundColor: '#007bff',
+                        borderWidth: 1.5,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Fire',
+                        data: {{ data.trend_data|map(attribute='fire_count')|list|tojson }},
+                        borderColor: '#dc3545',
+                        backgroundColor: '#dc3545',
+                        borderWidth: 1.5,
+                        tension: 0.1
+                    }
+                ]
             },
             options: {
                 responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     y: {
-                        beginAtZero: false
+                        beginAtZero: false,
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
                     }
                 }
             }
+        });
+
+        // Incidents Table Functionality
+        let currentPage = 1;
+        const pageSize = 25;
+        let filteredIncidents = [];
+        
+        // Function to load incidents from API
+        async function loadIncidents() {
+            const serviceType = document.getElementById('serviceFilter').value;
+            const region = document.getElementById('regionSelect').value;
+            const date = document.getElementById('datePicker').value;
+            const search = document.getElementById('searchIncidents').value;
+            
+            try {
+                const response = await fetch(`/api/incidents?date=${date}&service=${serviceType}&region=${region}&search=${search}`);
+                const data = await response.json();
+                filteredIncidents = data.incidents;
+                updateTable();
+                updatePagination();
+            } catch (error) {
+                console.error('Error loading incidents:', error);
+            }
+        }
+
+        // Function to update table with current page of incidents
+        function updateTable() {
+            const tbody = document.getElementById('incidentsTableBody');
+            tbody.innerHTML = '';
+            
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, filteredIncidents.length);
+            
+            for (let i = start; i < end; i++) {
+                const incident = filteredIncidents[i];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(incident.timestamp).toLocaleTimeString()}</td>
+                    <td>
+                        <span class="badge ${
+                            incident.service_type === 'Ambulance' ? 'bg-success' :
+                            incident.service_type === 'Politie' ? 'bg-primary' :
+                            'bg-danger'
+                        }">${incident.service_type}</span>
+                    </td>
+                    <td>${incident.region}</td>
+                    <td>${incident.message}</td>
+                `;
+                tbody.appendChild(row);
+            }
+            
+            document.getElementById('showingRange').textContent = `${start + 1}-${end}`;
+            document.getElementById('totalIncidents').textContent = filteredIncidents.length;
+        }
+
+        // Function to update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredIncidents.length / pageSize);
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+        }
+
+        // Event Listeners
+        document.getElementById('regionSelect').addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+
+        document.getElementById('serviceFilter').addEventListener('change', () => {
+            loadIncidents();
+        });
+
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            currentPage = 1;
+            loadIncidents();
+        });
+
+        document.getElementById('searchIncidents').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                currentPage = 1;
+                loadIncidents();
+            }
+        });
+
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            document.getElementById('searchIncidents').value = '';
+            currentPage = 1;
+            loadIncidents();
+        });
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable();
+                updatePagination();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredIncidents.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable();
+                updatePagination();
+            }
+        });
+
+        // Load incidents immediately when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadIncidents();
         });
     </script>
 </body>
