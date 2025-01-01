@@ -80,7 +80,7 @@
                         <div class="col-sm-5">
                             <label class="visually-hidden" for="regionSelect">Region</label>
                             <select class="form-select" id="regionSelect" name="region" onchange="this.form.submit()">
-                                <option value="">All Regions</option>
+                                <option value="" {% if selected_region is none or selected_region == '' %}selected{% endif %}>All Regions</option>
                                 {% for region in regions %}
                                 <option value="{{ region }}" {% if selected_region == region %}selected{% endif %}>
                                     {{ region }}
@@ -101,307 +101,344 @@
             </div>
         </header>
 
-        <!-- Emergency Incidents Overview -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="h5 mb-0">Emergency Incidents Overview</h3>
-            </div>
-            <div class="card-body">
-                <!-- Stats Summary -->
-                <div class="row g-4 mb-4">
-                    <div class="col-12">
-                        <div class="stat-card p-3">
-                            <h3 class="h4">{{ data.total_incidents }} Total Incidents</h3>
-                            <small class="text-muted">{{ date }}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card ambulance p-3">
-                            <h4>Ambulance</h4>
-                            <div class="d-flex justify-content-between">
-                                <span class="h3">{{ data.ambulance.count }}</span>
-                                <span class="trend-up">{{ data.ambulance.trend }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card police p-3">
-                            <h4>Police</h4>
-                            <div class="d-flex justify-content-between">
-                                <span class="h3">{{ data.police.count }}</span>
-                                <span class="trend-down">{{ data.police.trend }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card fire p-3">
-                            <h4>Fire</h4>
-                            <div class="d-flex justify-content-between">
-                                <span class="h3">{{ data.fire.count }}</span>
-                                <span class="trend-stable">{{ data.fire.trend }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="true">
+                    Dashboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ai-analysis-tab" data-bs-toggle="tab" data-bs-target="#ai-analysis" type="button" role="tab" aria-controls="ai-analysis" aria-selected="false">
+                    AI Analysis
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="incidents-tab" data-bs-toggle="tab" data-bs-target="#incidents" type="button" role="tab" aria-controls="incidents" aria-selected="false">
+                    Incident Details
+                </button>
+            </li>
+        </ul>
 
-                <!-- Incidents List Section -->
-                <div class="mt-4">
-                    <!-- Filters -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-3">
-                            <select class="form-select" id="serviceFilter">
-                                <option value="">All Services</option>
-                                <option value="Ambulance">Ambulance</option>
-                                <option value="Politie">Police</option>
-                                <option value="Brandweer">Fire</option>
-                            </select>
-                        </div>
-                        <div class="col-md-9">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="searchIncidents" placeholder="Search messages...">
-                                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                                <button class="btn btn-primary" type="button" id="applyFilters">Apply Filters</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Incidents Table -->
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="incidentsTable">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Service</th>
-                                    <th>Region</th>
-                                    <th>Message</th>
-                                </tr>
-                            </thead>
-                            <tbody id="incidentsTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div class="text-muted small">
-                            Showing <span id="showingRange">0-0</span> of <span id="totalIncidents">0</span> incidents
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn btn-outline-secondary" id="prevPage" disabled>
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                            <button class="btn btn-outline-secondary" id="nextPage" disabled>
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI Analysis Section -->
-        {% if data.analysis %}
-        <div class="card ai-analysis mb-4">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="h5 mb-0">AI Incident Analysis</h3>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#aiAnalysis" aria-expanded="false" aria-controls="aiAnalysis">
-                        Show More
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Always visible summary -->
-                <div class="mb-3">
-                    <p class="mb-0">{{ data.analysis.summary }}</p>
-                </div>
-                
-                <!-- Collapsible detailed analysis -->
-                <div class="collapse" id="aiAnalysis">
-                    <hr>
-                    <!-- Key Highlights -->
-                    <div class="mb-4">
-                        <h4 class="h6 text-muted mb-3">Key Highlights</h4>
-                        <div class="row g-3">
-                            {% for highlight in data.analysis.highlights %}
-                            <div class="col-md-6">
-                                <div class="card h-100 border-0 shadow-sm highlight-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title h6 d-flex justify-content-between">
-                                            {{ highlight.title }}
-                                            <span class="badge {% if highlight.severity == 'High' %}bg-danger
-                                                          {% elif highlight.severity == 'Medium' %}bg-warning
-                                                          {% else %}bg-success{% endif %}">
-                                                {{ highlight.severity }}
-                                            </span>
-                                        </h5>
-                                        <p class="card-text small">{{ highlight.description }}</p>
-                                        <div class="mt-2">
-                                            {% for area in highlight.affected_areas %}
-                                            <span class="badge bg-light text-dark me-1">{{ area }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Trends -->
-                    <div class="mb-4">
-                        <h4 class="h6 text-muted mb-3">Identified Trends</h4>
-                        <div class="row g-3">
-                            {% for trend in data.analysis.trends %}
-                            <div class="col-12">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title h6">{{ trend.name }}</h5>
-                                        <p class="card-text small">{{ trend.description }}</p>
-                                        <div class="mt-2">
-                                            <h6 class="text-muted small">Supporting Evidence:</h6>
-                                            <ul class="small mb-0">
-                                                {% for evidence in trend.evidence %}
-                                                <li>{{ evidence }}</li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Recommendations -->
-                    <div>
-                        <h4 class="h6 text-muted mb-3">Recommendations</h4>
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    {% for recommendation in data.analysis.recommendations %}
-                                    <li class="list-group-item bg-transparent">{{ recommendation }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Timeline Chart -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="card-title h5 mb-0">Incident Timeline (Last 24 Hours)</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="timelineChart" height="100"></canvas>
-            </div>
-        </div>
-
-        <div class="row g-4 mb-4">
-            <!-- Category Breakdown -->
-            <div class="col-md-6">
-                <div class="card h-100">
+        <!-- Tab Content -->
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                <!-- Emergency Incidents Overview -->
+                <div class="card mb-4">
                     <div class="card-header">
-                        <h3 class="card-title h5 mb-0">Category Breakdown</h3>
+                        <h3 class="h5 mb-0">Emergency Incidents Overview</h3>
                     </div>
                     <div class="card-body">
-                        <canvas id="categoryChart"></canvas>
-                        <div class="mt-3">
-                            <table class="table table-sm">
-                                <tbody>
-                                    {% for category, count in data.category_breakdown.items() %}
+                        <!-- Stats Summary -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-12">
+                                <div class="stat-card p-3">
+                                    <h3 class="h4">{{ data.total_incidents }} Total Incidents</h3>
+                                    <small class="text-muted">{{ date }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card ambulance p-3">
+                                    <h4>Ambulance</h4>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="h3">{{ data.ambulance.count }}</span>
+                                        <span class="trend-up">{{ data.ambulance.trend }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card police p-3">
+                                    <h4>Police</h4>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="h3">{{ data.police.count }}</span>
+                                        <span class="trend-down">{{ data.police.trend }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card fire p-3">
+                                    <h4>Fire</h4>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="h3">{{ data.fire.count }}</span>
+                                        <span class="trend-stable">{{ data.fire.trend }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Chart -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title h5 mb-0">Incident Timeline (Last 24 Hours)</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="timelineChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <!-- Category Breakdown -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h3 class="card-title h5 mb-0">Category Breakdown</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="categoryChart"></canvas>
+                                <div class="mt-3">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            {% for category, count in data.category_breakdown.items() %}
+                                            <tr>
+                                                <td>{{ category }}</td>
+                                                <td class="text-end">{{ count }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotspots -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h3 class="card-title h5 mb-0">Hotspot Insights</h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Location</th>
+                                            <th class="text-end">Incidents</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hotspot in data.hotspots %}
+                                        <tr>
+                                            <td>{{ hotspot.location }}</td>
+                                            <td class="text-end">{{ hotspot.incidents }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Highlights -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title h5 mb-0">Trends Overview</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if data.analysis %}
+                        <p>
+                            {% if selected_region %}
+                                {{ selected_region }} saw 
+                            {% else %}
+                                All regions saw 
+                            {% endif %}
+                            {% if data.ambulance.trend.startswith('+') %}
+                                an increase
+                            {% elif data.ambulance.trend.startswith('-') %}
+                                a decrease
+                            {% else %}
+                                stable numbers
+                            {% endif %}
+                            in ambulance calls.
+                            Police interventions were 
+                            {% if data.police.trend.startswith('+') %}
+                                higher
+                            {% elif data.police.trend.startswith('-') %}
+                                lower
+                            {% else %}
+                                stable
+                            {% endif %}
+                            than the previous day, and fire incidents were 
+                            {% if data.fire.trend.startswith('+') %}
+                                up
+                            {% elif data.fire.trend.startswith('-') %}
+                                down
+                            {% else %}
+                                stable
+                            {% endif %}.
+                        </p>
+                        {% else %}
+                        <p class="text-muted">
+                            Daily analysis will be available at the end of the day.
+                        </p>
+                        {% endif %}
+                        <canvas id="trendChart" height="100"></canvas>
+                        <p class="text-muted mt-2">7-day incident trend</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Analysis Tab -->
+            <div class="tab-pane fade" id="ai-analysis" role="tabpanel" aria-labelledby="ai-analysis-tab">
+                {% if data.analysis %}
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0">AI Incident Analysis</h3>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Summary -->
+                        <div class="mb-4">
+                            <h4 class="h6 text-muted mb-3">Summary</h4>
+                            <p>{{ data.analysis.summary }}</p>
+                        </div>
+                        
+                        <!-- Key Highlights -->
+                        <div class="mb-4">
+                            <h4 class="h6 text-muted mb-3">Key Highlights</h4>
+                            <div class="row g-3">
+                                {% for highlight in data.analysis.highlights %}
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm highlight-card">
+                                        <div class="card-body">
+                                            <h5 class="card-title h6 d-flex justify-content-between">
+                                                {{ highlight.title }}
+                                                <span class="badge {% if highlight.severity == 'High' %}bg-danger
+                                                              {% elif highlight.severity == 'Medium' %}bg-warning
+                                                              {% else %}bg-success{% endif %}">
+                                                    {{ highlight.severity }}
+                                                </span>
+                                            </h5>
+                                            <p class="card-text small">{{ highlight.description }}</p>
+                                            <div class="mt-2">
+                                                {% for area in highlight.affected_areas %}
+                                                <span class="badge bg-light text-dark me-1">{{ area }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Trends -->
+                        <div class="mb-4">
+                            <h4 class="h6 text-muted mb-3">Identified Trends</h4>
+                            <div class="row g-3">
+                                {% for trend in data.analysis.trends %}
+                                <div class="col-12">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h5 class="card-title h6">{{ trend.name }}</h5>
+                                            <p class="card-text small">{{ trend.description }}</p>
+                                            <div class="mt-2">
+                                                <h6 class="text-muted small">Supporting Evidence:</h6>
+                                                <ul class="small mb-0">
+                                                    {% for evidence in trend.evidence %}
+                                                    <li>{{ evidence }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Recommendations -->
+                        <div>
+                            <h4 class="h6 text-muted mb-3">Recommendations</h4>
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for recommendation in data.analysis.recommendations %}
+                                        <li class="list-group-item bg-transparent">{{ recommendation }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted text-center mb-0">
+                            AI analysis will be available at the end of the day.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Incidents Tab -->
+            <div class="tab-pane fade" id="incidents" role="tabpanel" aria-labelledby="incidents-tab">
+                <!-- Incidents List Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="h5 mb-0">Incident Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filters -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <select class="form-select" id="serviceFilter">
+                                    <option value="">All Services</option>
+                                    <option value="Ambulance">Ambulance</option>
+                                    <option value="Politie">Police</option>
+                                    <option value="Brandweer">Fire</option>
+                                </select>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchIncidents" placeholder="Search messages...">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    <button class="btn btn-primary" type="button" id="applyFilters">Apply Filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Incidents Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="incidentsTable">
+                                <thead>
                                     <tr>
-                                        <td>{{ category }}</td>
-                                        <td class="text-end">{{ count }}</td>
+                                        <th>Time</th>
+                                        <th>Service</th>
+                                        <th>Region</th>
+                                        <th>Message</th>
                                     </tr>
-                                    {% endfor %}
+                                </thead>
+                                <tbody id="incidentsTableBody">
+                                    <!-- Populated by JavaScript -->
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted small">
+                                Showing <span id="showingRange">0-0</span> of <span id="totalIncidents">0</span> incidents
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-secondary" id="prevPage" disabled>
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" id="nextPage" disabled>
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Hotspots -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header">
-                        <h3 class="card-title h5 mb-0">Hotspot Insights</h3>
-                    </div>
-                    <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Location</th>
-                                    <th class="text-end">Incidents</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for hotspot in data.hotspots %}
-                                <tr>
-                                    <td>{{ hotspot.location }}</td>
-                                    <td class="text-end">{{ hotspot.incidents }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Highlights -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="card-title h5 mb-0">Highlights & Trends</h3>
-            </div>
-            <div class="card-body">
-                {% if data.analysis %}
-                <p>
-                    {% if selected_region %}
-                        {{ selected_region }} saw 
-                    {% else %}
-                        All regions saw 
-                    {% endif %}
-                    {% if data.ambulance.trend.startswith('+') %}
-                        an increase
-                    {% elif data.ambulance.trend.startswith('-') %}
-                        a decrease
-                    {% else %}
-                        stable numbers
-                    {% endif %}
-                    in ambulance calls.
-                    Police interventions were 
-                    {% if data.police.trend.startswith('+') %}
-                        higher
-                    {% elif data.police.trend.startswith('-') %}
-                        lower
-                    {% else %}
-                        stable
-                    {% endif %}
-                    than the previous day, and fire incidents were 
-                    {% if data.fire.trend.startswith('+') %}
-                        up
-                    {% elif data.fire.trend.startswith('-') %}
-                        down
-                    {% else %}
-                        stable
-                    {% endif %}.
-                </p>
-                {% else %}
-                <p class="text-muted">
-                    Daily analysis will be available at the end of the day.
-                </p>
-                {% endif %}
-                <canvas id="trendChart" height="100"></canvas>
-                <p class="text-muted mt-2">7-day incident trend</p>
             </div>
         </div>
 
